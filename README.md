@@ -1,1 +1,1 @@
-## eth-onekey-keyring
+## @starcoin/stc-onekey-keyring

@@ -1,7 +1,7 @@
 const { EventEmitter } = require('events')
-const ethUtil = require('ethereumjs-util')
+const stcUtil = require('@starcoin/stc-util')
 const Transaction = require('ethereumjs-tx')
-const HDKey = require('hdkey')
+const HDKey = require('@starcoin/stc-hdkey');
 const TrezorConnect = require('@onekeyhq/connect').default
 
 const hdPathString = `m/44'/101010'/0'/0'`
@@ -138,7 +138,7 @@ class TrezorKeyring extends EventEmitter {
               balance: null,
               index: i,
             })
-            this.paths[ethUtil.toChecksumAddress(address)] = i
+            this.paths[stcUtil.toChecksumAddress(address)] = i
 
           }
           resolve(accounts)
@@ -186,8 +186,8 @@ class TrezorKeyring extends EventEmitter {
 
                   const signedTx = new Transaction(tx)
 
-                  const addressSignedWith = ethUtil.toChecksumAddress(`0x${signedTx.from.toString('hex')}`)
-                  const correctAddress = ethUtil.toChecksumAddress(address)
+                  const addressSignedWith = stcUtil.toChecksumAddress(`0x${signedTx.from.toString('hex')}`)
+                  const correctAddress = stcUtil.toChecksumAddress(address)
                   if (addressSignedWith !== correctAddress) {
                     reject(new Error('签名的 OneKey 设备与绑定的 OneKey 账户不是同一个设备，请确认后重试！'))
                   }
@@ -226,11 +226,11 @@ class TrezorKeyring extends EventEmitter {
             try {
               TrezorConnect.ethereumSignMessage({
                 path: this._pathFromAddress(withAccount),
-                message: ethUtil.stripHexPrefix(message),
+                message: stcUtil.stripHexPrefix(message),
                 hex: true,
               }).then((response) => {
                 if (response.success) {
-                  if (response.payload.address !== ethUtil.toChecksumAddress(withAccount)) {
+                  if (response.payload.address !== stcUtil.toChecksumAddress(withAccount)) {
                     reject(new Error('signature doesnt match the right address'))
                   }
                   const signature = `0x${response.payload.signature}`
@@ -275,20 +275,23 @@ class TrezorKeyring extends EventEmitter {
   /* PRIVATE METHODS */
 
   _normalize(buf) {
-    return ethUtil.bufferToHex(buf).toString()
+    return stcUtil.bufferToHex(buf).toString()
   }
 
   // eslint-disable-next-line no-shadow
   _addressFromIndex(pathBase, i) {
     const dkey = this.hdk.derive(`${pathBase}/${i}`)
-    const address = ethUtil
-      .publicToAddress(dkey.publicKey, true)
-      .toString('hex')
-    return ethUtil.toChecksumAddress(`0x${address}`)
+    const address = stcUtil.privateToPublicED(dkey.privKey).then(pubKey => {
+      return stcUtil.publicToAddressED(pubKey);
+    });
+    // const address = stcUtil
+    //   .publicToAddress(dkey.publicKey, true)
+    //   .toString('hex')
+    return stcUtil.toChecksumAddress(`0x${address}`)
   }
 
   _pathFromAddress(address) {
-    const checksummedAddress = ethUtil.toChecksumAddress(address)
+    const checksummedAddress = stcUtil.toChecksumAddress(address)
     let index = this.paths[checksummedAddress]
     if (typeof index === 'undefined') {
       for (let i = 0; i < MAX_INDEX; i++) {
