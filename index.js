@@ -3,6 +3,8 @@ const stcUtil = require('@starcoin/stc-util')
 const Transaction = require('ethereumjs-tx')
 const HDKey = require('@starcoin/stc-hdkey');
 const TrezorConnect = require('@onekeyhq/connect').default
+const log = require('loglevel')
+
 
 const hdPathString = `m/44'/101010'/0'/0'`
 const keyringType = 'Trezor Hardware'
@@ -56,13 +58,14 @@ class TrezorKeyring extends EventEmitter {
     }
     return new Promise((resolve, reject) => {
       try {
-        TrezorConnect.getPublicKey({
-          path: this.hdPath,
-          coin: 'STC',
+        const path = `${this.hdPath}/0'`
+        TrezorConnect.starcoinGetPublicKey({
+          path,
+          showOnDevice: false,
         }).then((response) => {
           if (response.success) {
             this.hdk.publicKey = Buffer.from(response.payload.publicKey, 'hex')
-            this.hdk.chainCode = Buffer.from(response.payload.chainCode, 'hex')
+            // this.hdk.chainCode = Buffer.from(response.payload.chainCode, 'hex')
             resolve('just unlocked')
           } else {
             reject(new Error((response.payload && response.payload.error) || 'Unknown error'))
@@ -121,26 +124,28 @@ class TrezorKeyring extends EventEmitter {
     if (this.page <= 0) {
       this.page = 1
     }
-
     return new Promise((resolve, reject) => {
       this.unlock()
-        .then((_) => {
+        .then(async (_) => {
 
           const from = (this.page - 1) * this.perPage
           const to = from + this.perPage
 
           const accounts = []
 
+          const bundle = []
           for (let i = from; i < to; i++) {
-            const address = this._addressFromIndex(pathBase, i)
-            accounts.push({
-              address,
-              balance: null,
-              index: i,
-            })
-            this.paths[stcUtil.toChecksumAddress(address)] = i
-
+            bundle.push({ path: `${this.hdPath}/${i}'`, showOnDevice: false })
           }
+          const addresses = await this._addressFromBundle(bundle)
+          addresses.forEach((item) => {
+            accounts.push({
+              address: item[0],
+              balance: null,
+              index: item[1],
+            })
+            this.paths[stcUtil.toChecksumAddress(item[0])] = item[1]
+          })
           resolve(accounts)
         })
         .catch((e) => {
@@ -279,15 +284,52 @@ class TrezorKeyring extends EventEmitter {
   }
 
   // eslint-disable-next-line no-shadow
+  _addressFromBundle(bundle) {
+    return new Promise((resolve, reject) => {
+      try {
+        TrezorConnect.starcoinGetAddress({
+          bundle,
+        }).then((response) => {
+          if (response.success) {
+            const addresses = response.payload.map((item, idx) => {
+              const arr = item.serializedPath.split('/')
+              const i = arr[arr.length - 1].split("'")[0]
+              return [item.address, parseInt(i, 10)]
+            })
+            resolve(addresses)
+          } else {
+            reject(new Error((response.payload && response.payload.error) || 'Unknown error'))
+          }
+        }).catch((e) => {
+          reject(new Error((e && e.toString()) || 'Unknown error'))
+        })
+      } catch (e) {
+        reject(new Error((e && e.toString()) || 'Unknown error'))
+      }
+    })
+  }
+
+  // eslint-disable-next-line no-shadow
   _addressFromIndex(pathBase, i) {
-    const dkey = this.hdk.derive(`${pathBase}/${i}`)
-    const address = stcUtil.privateToPublicED(dkey.privKey).then(pubKey => {
-      return stcUtil.publicToAddressED(pubKey);
-    });
-    // const address = stcUtil
-    //   .publicToAddress(dkey.publicKey, true)
-    //   .toString('hex')
-    return stcUtil.toChecksumAddress(`0x${address}`)
+    return new Promise((resolve, reject) => {
+      try {
+        const path = `${pathBase}/${i}'`
+        TrezorConnect.starcoinGetAddress({
+          path,
+          showOnDevice: false,
+        }).then((response) => {
+          if (response.success) {
+            resolve(response.payload.address)
+          } else {
+            reject(new Error((response.payload && response.payload.error) || 'Unknown error'))
+          }
+        }).catch((e) => {
+          reject(new Error((e && e.toString()) || 'Unknown error'))
+        })
+      } catch (e) {
+        reject(new Error((e && e.toString()) || 'Unknown error'))
+      }
+    })
   }
 
   _pathFromAddress(address) {
