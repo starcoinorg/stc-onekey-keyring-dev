@@ -86,12 +86,12 @@ class TrezorKeyring extends EventEmitter {
   addAccounts(n = 1) {
     return new Promise((resolve, reject) => {
       this.unlock()
-        .then((_) => {
+        .then(async (_) => {
           const from = this.unlockedAccount
           const to = from + n
 
           for (let i = from; i < to; i++) {
-            const address = this._addressFromIndex(pathBase, i)
+            const address = await this._addressFromIndex(this.hdPath, i)
             if (!this.accounts.includes(address)) {
               this.accounts.push(address)
             }
@@ -319,7 +319,7 @@ class TrezorKeyring extends EventEmitter {
           showOnDevice: false,
         }).then((response) => {
           if (response.success) {
-            resolve(response.payload.address)
+            resolve(stcUtil.toChecksumAddress(response.payload.address))
           } else {
             reject(new Error((response.payload && response.payload.error) || 'Unknown error'))
           }
@@ -332,12 +332,12 @@ class TrezorKeyring extends EventEmitter {
     })
   }
 
-  _pathFromAddress(address) {
+  async _pathFromAddress(address) {
     const checksummedAddress = stcUtil.toChecksumAddress(address)
     let index = this.paths[checksummedAddress]
     if (typeof index === 'undefined') {
       for (let i = 0; i < MAX_INDEX; i++) {
-        if (checksummedAddress === this._addressFromIndex(pathBase, i)) {
+        if (checksummedAddress === await this._addressFromIndex(this.hdPath, i)) {
           index = i
           break
         }
@@ -347,7 +347,7 @@ class TrezorKeyring extends EventEmitter {
     if (typeof index === 'undefined') {
       throw new Error('Unknown address')
     }
-    return `${this.hdPath}/${index}`
+    return `${this.hdPath}/${index}'`
   }
 }
 
