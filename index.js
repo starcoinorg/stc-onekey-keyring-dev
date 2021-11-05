@@ -277,6 +277,28 @@ class TrezorKeyring extends EventEmitter {
     this.paths = {}
   }
 
+  getPublicKeyFor(address) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const path = await this._pathFromAddress(address)
+        TrezorConnect.starcoinGetPublicKey({
+          path,
+          showOnDevice: false,
+        }).then((response) => {
+          if (response.success) {
+            resolve(stcUtil.addHexPrefix(response.payload.publicKey))
+          } else {
+            reject(new Error((response.payload && response.payload.error) || 'Unknown error 1'))
+          }
+        }).catch((e) => {
+          reject(new Error((e && e.toString()) || 'Unknown error 2'))
+        })
+      } catch (e) {
+        reject(new Error((e && e.toString()) || 'Unknown error 3'))
+      }
+    })
+  }
+
   /* PRIVATE METHODS */
 
   _normalize(buf) {
