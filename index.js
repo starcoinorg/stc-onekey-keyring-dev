@@ -1,10 +1,10 @@
 const { EventEmitter } = require('events')
 const stcUtil = require('@starcoin/stc-util')
 const Transaction = require('ethereumjs-tx')
-const HDKey = require('@starcoin/stc-hdkey');
+const HDKey = require('@starcoin/stc-hdkey')
 const TrezorConnect = require('@onekeyhq/connect').default
+var encoding = require('@starcoin/starcoin').encoding
 const log = require('loglevel')
-
 
 const hdPathString = `m/44'/101010'/0'/0'`
 const keyringType = 'Trezor Hardware'
@@ -15,6 +15,7 @@ const TREZOR_CONNECT_MANIFEST = {
   email: 'hi@onekey.so',
   appUrl: 'https://www.onekey.so',
 }
+
 class TrezorKeyring extends EventEmitter {
   constructor(opts = {}) {
     super()
@@ -297,6 +298,10 @@ class TrezorKeyring extends EventEmitter {
         reject(new Error((e && e.toString()) || 'Unknown error 3'))
       }
     })
+  }
+
+  getReceiptIdentifier(address) {
+    return this.getPublicKeyFor(address).then((publicKey) => encoding.publicKeyToReceiptIdentifier(publicKey))
   }
 
   /* PRIVATE METHODS */
