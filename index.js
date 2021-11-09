@@ -177,12 +177,11 @@ class TrezorKeyring extends EventEmitter {
                 path: await this._pathFromAddress(address),
                 rawTx: stcUtil.stripHexPrefix(encoding.bcsEncode(tx)),
               }).then((response) => {
-                log.debug({ response })
                 if (response.success) {
 
                   const signature = stcUtil.addHexPrefix(response.payload.signature)
                   const public_key = stcUtil.addHexPrefix(response.payload.public_key)
-                  const signedTx = utils.tx.createSignedUserTransaction(public_key, signature, tx)
+                  const signedTx = utils.tx.signTxn(public_key, signature, tx)
 
                   const addressSignedWith = stcUtil.toChecksumAddress(encoding.addressFromSCS(tx.sender))
                   const correctAddress = stcUtil.toChecksumAddress(address)
@@ -272,7 +271,7 @@ class TrezorKeyring extends EventEmitter {
     this.paths = {}
   }
 
-  getPublicKeyFor(address) {
+  getPublicKeyFor(address, opts = {}) {
     return new Promise(async (resolve, reject) => {
       try {
         const path = await this._pathFromAddress(address)
