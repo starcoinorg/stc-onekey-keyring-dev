@@ -3,7 +3,7 @@ const stcUtil = require('@starcoin/stc-util')
 const Transaction = require('ethereumjs-tx')
 const HDKey = require('@starcoin/stc-hdkey')
 const TrezorConnect = require('@onekeyhq/connect').default
-var encoding = require('@starcoin/starcoin').encoding
+const { encoding, utils } = require('@starcoin/starcoin')
 const log = require('loglevel')
 
 const hdPathString = `m/44'/101010'/0'/0'`
@@ -166,55 +166,49 @@ class TrezorKeyring extends EventEmitter {
     this.accounts = this.accounts.filter((a) => a.toLowerCase() !== address.toLowerCase())
   }
 
-  // tx is an instance of the ethereumjs-transaction class.
+  // tx is an instance of the starcoin_types.RawUserTransaction.
   signTransaction(address, tx) {
     return new Promise((resolve, reject) => {
       this.unlock()
         .then((status) => {
-          setTimeout((_) => {
+          setTimeout(async (_) => {
             try {
-              TrezorConnect.ethereumSignTransaction({
-                path: this._pathFromAddress(address),
-                transaction: {
-                  to: this._normalize(tx.to),
-                  value: this._normalize(tx.value),
-                  data: this._normalize(tx.data),
-                  chainId: tx._chainId,
-                  nonce: this._normalize(tx.nonce),
-                  gasLimit: this._normalize(tx.gasLimit),
-                  gasPrice: this._normalize(tx.gasPrice),
-                },
+              TrezorConnect.starcoinSignTransaction({
+                path: await this._pathFromAddress(address),
+                rawTx: stcUtil.stripHexPrefix(encoding.bcsEncode(tx)),
               }).then((response) => {
+                log.debug({ response })
                 if (response.success) {
-                  tx.v = response.payload.v
-                  tx.r = response.payload.r
-                  tx.s = response.payload.s
 
-                  const signedTx = new Transaction(tx)
+                  const signature = stcUtil.addHexPrefix(response.payload.signature)
+                  const public_key = stcUtil.addHexPrefix(response.payload.public_key)
+                  const signedTx = utils.tx.createSignedUserTransaction(public_key, signature, tx)
 
-                  const addressSignedWith = stcUtil.toChecksumAddress(`0x${signedTx.from.toString('hex')}`)
+                  const addressSignedWith = stcUtil.toChecksumAddress(encoding.addressFromSCS(tx.sender))
                   const correctAddress = stcUtil.toChecksumAddress(address)
                   if (addressSignedWith !== correctAddress) {
                     reject(new Error('签名的 OneKey 设备与绑定的 OneKey 账户不是同一个设备，请确认后重试！'))
                   }
 
-                  resolve(signedTx)
+                  const signedTxHex = encoding.bcsEncode(signedTx)
+
+                  resolve(signedTxHex)
                 } else {
-                  reject(new Error((response.payload && response.payload.error) || 'Unknown error'))
+                  reject(new Error((response.payload && response.payload.error) || '1.Unknown error'))
                 }
               }).catch((e) => {
-                reject(new Error((e && e.toString()) || 'Unknown error'))
+                reject(new Error((e && e.toString()) || '2.Unknown error'))
               })
             } catch (e) {
               // 上面的 this._pathFromAddress 可能会扔出错误, 没有被catch, promise 就一直在pending
-              reject(new Error((e && e.toString()) || 'Unknown error'))
+              reject(new Error((e && e.toString()) || '3.Unknown error'))
             }
             // This is necessary to avoid popup collision
             // between the unlock & sign trezor popups
           }, status === 'just unlocked' ? DELAY_BETWEEN_POPUPS : 0)
 
         }).catch((e) => {
-          reject(new Error((e && e.toString()) || 'Unknown error'))
+          reject(new Error((e && e.toString()) || '4.Unknown error'))
         })
     })
   }
