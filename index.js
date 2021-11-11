@@ -6,16 +6,16 @@ const { encoding, utils } = require('@starcoin/starcoin')
 const log = require('loglevel')
 
 const hdPathString = `m/44'/101010'/0'/0'`
-const keyringType = 'Trezor Hardware'
+const keyringType = 'OneKey Hardware'
 const pathBase = 'm'
 const MAX_INDEX = 1000
 const DELAY_BETWEEN_POPUPS = 1000
-const TREZOR_CONNECT_MANIFEST = {
+const ONEKEY_CONNECT_MANIFEST = {
   email: 'hi@onekey.so',
   appUrl: 'https://www.onekey.so',
 }
 
-class TrezorKeyring extends EventEmitter {
+class OneKeyKeyring extends EventEmitter {
   constructor(opts = {}) {
     super()
     this.type = keyringType
@@ -26,7 +26,7 @@ class TrezorKeyring extends EventEmitter {
     this.unlockedAccount = 0
     this.paths = {}
     this.deserialize(opts)
-    OneKeyConnect.manifest(TREZOR_CONNECT_MANIFEST)
+    OneKeyConnect.manifest(ONEKEY_CONNECT_MANIFEST)
   }
 
   serialize() {
@@ -202,7 +202,7 @@ class TrezorKeyring extends EventEmitter {
               reject(new Error((e && e.toString()) || '3.Unknown error'))
             }
             // This is necessary to avoid popup collision
-            // between the unlock & sign trezor popups
+            // between the unlock & sign onekey popups
           }, status === 'just unlocked' ? DELAY_BETWEEN_POPUPS : 0)
 
         }).catch((e) => {
@@ -239,7 +239,7 @@ class TrezorKeyring extends EventEmitter {
               reject(new Error((e && e.toString()) || 'Unknown error'))
             }
             // This is necessary to avoid popup collision
-            // between the unlock & sign trezor popups
+            // between the unlock & sign onekey popups
           }, status === 'just unlocked' ? DELAY_BETWEEN_POPUPS : 0)
         }).catch((e) => {
           log.info('Error while trying to sign a message ', e)
@@ -249,7 +249,7 @@ class TrezorKeyring extends EventEmitter {
   }
 
   signTypedData() {
-    // Waiting on trezor to enable this
+    // Waiting on onekey to enable this
     return Promise.reject(new Error('Not supported on this device'))
   }
 
@@ -365,5 +365,5 @@ class TrezorKeyring extends EventEmitter {
   }
 }
 
-TrezorKeyring.type = keyringType
-module.exports = TrezorKeyring
+OneKeyKeyring.type = keyringType
+module.exports = OneKeyKeyring
