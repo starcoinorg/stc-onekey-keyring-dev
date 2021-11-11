@@ -1,7 +1,7 @@
 const { EventEmitter } = require('events')
 const stcUtil = require('@starcoin/stc-util')
 const HDKey = require('@starcoin/stc-hdkey')
-const TrezorConnect = require('@onekeyhq/connect').default
+const OneKeyConnect = require('@onekeyhq/connect').default
 const { encoding, utils } = require('@starcoin/starcoin')
 const log = require('loglevel')
 
@@ -26,7 +26,7 @@ class TrezorKeyring extends EventEmitter {
     this.unlockedAccount = 0
     this.paths = {}
     this.deserialize(opts)
-    TrezorConnect.manifest(TREZOR_CONNECT_MANIFEST)
+    OneKeyConnect.manifest(TREZOR_CONNECT_MANIFEST)
   }
 
   serialize() {
@@ -59,7 +59,7 @@ class TrezorKeyring extends EventEmitter {
     return new Promise((resolve, reject) => {
       try {
         const path = `${this.hdPath}/0'`
-        TrezorConnect.starcoinGetPublicKey({
+        OneKeyConnect.starcoinGetPublicKey({
           path,
           showOnDevice: false,
         }).then((response) => {
@@ -172,7 +172,7 @@ class TrezorKeyring extends EventEmitter {
         .then((status) => {
           setTimeout(async (_) => {
             try {
-              TrezorConnect.starcoinSignTransaction({
+              OneKeyConnect.starcoinSignTransaction({
                 path: await this._pathFromAddress(address),
                 rawTx: stcUtil.stripHexPrefix(encoding.bcsEncode(tx)),
               }).then((response) => {
@@ -222,7 +222,7 @@ class TrezorKeyring extends EventEmitter {
         .then((status) => {
           setTimeout(async (_) => {
             try {
-              TrezorConnect.starcoinSignMessage({
+              OneKeyConnect.starcoinSignMessage({
                 path: await this._pathFromAddress(withAccount),
                 message,
               }).then((response) => {
@@ -269,7 +269,7 @@ class TrezorKeyring extends EventEmitter {
     return new Promise(async (resolve, reject) => {
       try {
         const path = await this._pathFromAddress(address)
-        TrezorConnect.starcoinGetPublicKey({
+        OneKeyConnect.starcoinGetPublicKey({
           path,
           showOnDevice: false,
         }).then((response) => {
@@ -301,7 +301,7 @@ class TrezorKeyring extends EventEmitter {
   _addressFromBundle(bundle) {
     return new Promise((resolve, reject) => {
       try {
-        TrezorConnect.starcoinGetAddress({
+        OneKeyConnect.starcoinGetAddress({
           bundle,
         }).then((response) => {
           if (response.success) {
@@ -328,7 +328,7 @@ class TrezorKeyring extends EventEmitter {
     return new Promise((resolve, reject) => {
       try {
         const path = `${pathBase}/${i}'`
-        TrezorConnect.starcoinGetAddress({
+        OneKeyConnect.starcoinGetAddress({
           path,
           showOnDevice: false,
         }).then((response) => {
