@@ -1,6 +1,5 @@
 const { EventEmitter } = require('events')
 const stcUtil = require('@starcoin/stc-util')
-const Transaction = require('ethereumjs-tx')
 const HDKey = require('@starcoin/stc-hdkey')
 const TrezorConnect = require('@onekeyhq/connect').default
 const { encoding, utils } = require('@starcoin/starcoin')
@@ -221,24 +220,19 @@ class TrezorKeyring extends EventEmitter {
     return new Promise((resolve, reject) => {
       this.unlock()
         .then((status) => {
-          setTimeout((_) => {
+          setTimeout(async (_) => {
             try {
-              TrezorConnect.ethereumSignMessage({
-                path: this._pathFromAddress(withAccount),
-                message: stcUtil.stripHexPrefix(message),
-                hex: true,
+              TrezorConnect.starcoinSignMessage({
+                path: await this._pathFromAddress(withAccount),
+                message,
               }).then((response) => {
                 if (response.success) {
-                  if (response.payload.address !== stcUtil.toChecksumAddress(withAccount)) {
-                    reject(new Error('signature doesnt match the right address'))
-                  }
-                  const signature = `0x${response.payload.signature}`
-                  resolve(signature)
+                  resolve(response.payload)
                 } else {
                   reject(new Error((response.payload && response.payload.error) || 'Unknown error'))
                 }
               }).catch((e) => {
-                console.log('Error while trying to sign a message ', e)
+                log.info('Error while trying to sign a message ', e)
                 reject(new Error((e && e.toString()) || 'Unknown error'))
               })
             } catch (e) {
@@ -248,7 +242,7 @@ class TrezorKeyring extends EventEmitter {
             // between the unlock & sign trezor popups
           }, status === 'just unlocked' ? DELAY_BETWEEN_POPUPS : 0)
         }).catch((e) => {
-          console.log('Error while trying to sign a message ', e)
+          log.info('Error while trying to sign a message ', e)
           reject(new Error((e && e.toString()) || 'Unknown error'))
         })
     })
