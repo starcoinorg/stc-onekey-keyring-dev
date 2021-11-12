@@ -1,6 +1,6 @@
 {
   "name": "@starcoin/stc-onekey-keyring",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A StarMask compatible keyring, for onekey hardware wallets",
   "files": [
     "index.js"
