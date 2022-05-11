@@ -45,6 +45,7 @@ class OneKeyKeyring extends EventEmitter {
     this.accounts = opts.accounts || []
     this.page = opts.page || 0
     this.perPage = opts.perPage || 5
+    this.paths = opts.paths || {}
     return Promise.resolve()
   }
 
@@ -58,7 +59,7 @@ class OneKeyKeyring extends EventEmitter {
     }
     return new Promise((resolve, reject) => {
       try {
-        const path = `${this.hdPath}/0'`
+        const path = `${ this.hdPath }/0'`
         OneKeyConnect.starcoinGetPublicKey({
           path,
           showOnDevice: false,
@@ -135,7 +136,7 @@ class OneKeyKeyring extends EventEmitter {
 
           const bundle = []
           for (let i = from; i < to; i++) {
-            bundle.push({ path: `${this.hdPath}/${i}'`, showOnDevice: false })
+            bundle.push({ path: `${ this.hdPath }/${ i }'`, showOnDevice: false })
           }
           const addresses = await this._addressFromBundle(bundle)
           addresses.forEach((item) => {
@@ -160,7 +161,7 @@ class OneKeyKeyring extends EventEmitter {
 
   removeAccount(address) {
     if (!this.accounts.map((a) => a.toLowerCase()).includes(address.toLowerCase())) {
-      throw new Error(`Address ${address} not found in this keyring`)
+      throw new Error(`Address ${ address } not found in this keyring`)
     }
     this.accounts = this.accounts.filter((a) => a.toLowerCase() !== address.toLowerCase())
   }
@@ -327,7 +328,7 @@ class OneKeyKeyring extends EventEmitter {
   _addressFromIndex(pathBase, i) {
     return new Promise((resolve, reject) => {
       try {
-        const path = `${pathBase}/${i}'`
+        const path = `${ pathBase }/${ i }'`
         OneKeyConnect.starcoinGetAddress({
           path,
           showOnDevice: false,
@@ -361,7 +362,7 @@ class OneKeyKeyring extends EventEmitter {
     if (typeof index === 'undefined') {
       throw new Error('Unknown address')
     }
-    return `${this.hdPath}/${index}'`
+    return `${ this.hdPath }/${ index }'`
   }
 }
 
