@@ -25,6 +25,8 @@ class OneKeyKeyring extends EventEmitter {
     this.perPage = 5
     this.unlockedAccount = 0
     this.paths = {}
+    this.accountPublicKeys = {}
+    this.persistAllKeyringsInsideOneKey = opts.persistAllKeyringsInsideOneKey || undefined
     this.deserialize(opts)
     OneKeyConnect.manifest(ONEKEY_CONNECT_MANIFEST)
   }
@@ -37,6 +39,7 @@ class OneKeyKeyring extends EventEmitter {
       paths: this.paths,
       perPage: this.perPage,
       unlockedAccount: this.unlockedAccount,
+      accountPublicKeys: this.accountPublicKeys,
     })
   }
 
@@ -45,6 +48,7 @@ class OneKeyKeyring extends EventEmitter {
     this.accounts = opts.accounts || []
     this.page = opts.page || 0
     this.perPage = opts.perPage || 5
+    this.accountPublicKeys = opts.accountPublicKeys || {}
     this.paths = opts.paths || {}
     return Promise.resolve()
   }
@@ -178,7 +182,6 @@ class OneKeyKeyring extends EventEmitter {
                 rawTx: stcUtil.stripHexPrefix(encoding.bcsEncode(tx)),
               }).then((response) => {
                 if (response.success) {
-
                   const signature = stcUtil.addHexPrefix(response.payload.signature)
                   const public_key = stcUtil.addHexPrefix(response.payload.public_key)
                   const signedTx = utils.tx.signTxn(public_key, signature, tx)
@@ -264,18 +267,28 @@ class OneKeyKeyring extends EventEmitter {
     this.page = 0
     this.unlockedAccount = 0
     this.paths = {}
+    this.accountPublicKeys = {}
   }
 
   getPublicKeyFor(address, opts = {}) {
     return new Promise(async (resolve, reject) => {
       try {
+        const checksummedAddress = stcUtil.toChecksumAddress(address)
+        if (this.accountPublicKeys[checksummedAddress]) {
+          resolve(this.accountPublicKeys[checksummedAddress])
+        }
         const path = await this._pathFromAddress(address)
         OneKeyConnect.starcoinGetPublicKey({
           path,
           showOnDevice: false,
         }).then((response) => {
           if (response.success) {
-            resolve(stcUtil.addHexPrefix(response.payload.publicKey))
+            const publicKey = stcUtil.addHexPrefix(response.payload.publicKey)
+            this.accountPublicKeys[checksummedAddress] = publicKey
+            if (this.persistAllKeyringsInsideOneKey) {
+              this.persistAllKeyringsInsideOneKey()
+            }
+            resolve(publicKey)
           } else {
             reject(new Error((response.payload && response.payload.error) || 'Unknown error 1'))
           }
