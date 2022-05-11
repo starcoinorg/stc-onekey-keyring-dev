@@ -276,6 +276,7 @@ class OneKeyKeyring extends EventEmitter {
         const checksummedAddress = stcUtil.toChecksumAddress(address)
         if (this.accountPublicKeys[checksummedAddress]) {
           resolve(this.accountPublicKeys[checksummedAddress])
+          return
         }
         const path = await this._pathFromAddress(address)
         OneKeyConnect.starcoinGetPublicKey({
