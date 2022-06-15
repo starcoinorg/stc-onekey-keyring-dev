@@ -1,6 +1,6 @@
 {
   "name": "@starcoin/stc-onekey-keyring",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "A StarMask compatible keyring, for onekey hardware wallets",
   "files": [
     "index.js"
@@ -33,7 +33,7 @@
     "mocha/mkdirp": "^0.5.1"
   },
   "dependencies": {
-    "@onekeyhq/connect": "8.6.1",
+    "@onekeyfe/js-sdk": "^1.1.6",
     "@starcoin/starcoin": "^1.6.2",
     "@starcoin/stc-hdkey": "^0.2.0",
     "@starcoin/stc-util": "^0.3.0",

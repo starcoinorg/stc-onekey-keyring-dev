@@ -1,7 +1,7 @@
 const { EventEmitter } = require('events')
 const stcUtil = require('@starcoin/stc-util')
 const HDKey = require('@starcoin/stc-hdkey')
-const OneKeyConnect = require('@onekeyhq/connect').default
+const OneKeyConnect = require('@onekeyfe/js-sdk').default
 const { encoding, utils } = require('@starcoin/starcoin')
 const log = require('loglevel')
 
