@@ -1,5 +1,5 @@
 {
-  "name": "@starcoin/stc-onekey-keyring",
+  "name": "@stc-lib/stc-onekey-keyring",
   "version": "1.2.0",
   "description": "A StarMask compatible keyring, for onekey hardware wallets",
   "files": [
@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/starcoinorg/stc-onekey-keyring.git"
+    "url": "git+https://github.com/starcoinorg/stc-onekey-keyring-dev.git"
   },
   "keywords": [
     "starcoin",
@@ -26,14 +26,13 @@
   ],
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/starcoinorg/stc-onekey-keyring/issues"
+    "url": "https://github.com/starcoinorg/stc-onekey-keyring-dev/issues"
   },
-  "homepage": "https://github.com/starcoinorg/stc-onekey-keyring#readme",
+  "homepage": "https://github.com/starcoinorg/stc-onekey-keyring-dev#readme",
   "resolutions": {
     "mocha/mkdirp": "^0.5.1"
   },
   "dependencies": {
-    "@onekeyfe/js-sdk": "^1.1.6",
     "@starcoin/starcoin": "^1.6.2",
     "@starcoin/stc-hdkey": "^0.2.0",
     "@starcoin/stc-util": "^0.3.0",
